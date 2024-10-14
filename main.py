@@ -20,6 +20,7 @@ except:
 
 class GUI():
     """Creates the main GUI"""
+
     def __init__(self):
         """Creates Main Window"""
         self.root = Tk()
@@ -89,6 +90,9 @@ class GUI():
         create_race = Button(addboat_layout, text="Create Race", command=lambda: self.create_race()) #Button to create a race
         create_race.grid(column=1, row=6, sticky=EW)
 
+        add_to_race = Button(addboat_layout, text="Add to Race", command=lambda: self.boat_to_race()) #Button to send a boat to a race
+        add_to_race.grid(column=1, row=7, sticky=EW)
+
         addboat_layout.grid(column=2, row=1, sticky=N)
 
     def refresh_boats(self):
@@ -134,15 +138,51 @@ class GUI():
 
     def create_race(self):
         """Creates a race window"""
+
+        self.contestant_list = []
+        self.contestant_buttons = []
         self.race_widget = Tk()
         self.race_widget.geometry("200x500")
         self.race_widget.title("Race")
 
+        enter_name = Label(self.race_widget, text="Race Name:")
+        enter_name.grid(column=0, row=0, sticky=E)
 
+        self.race_name = Entry(self.race_widget)
+        self.race_name.grid(column=1, row=0, sticky=EW)
 
-
+        self.refresh_race()
 
         self.race_widget.mainloop()
+
+    def refresh_race(self):
+        """refreshes boatlist when creating a race"""
+        count=1
+        for boat in self.contestant_list:
+            boat_button = Button(self.race_widget, text=boat.name, state=DISABLED, command=lambda: self.race_button_press(boat_button, boat.name))
+            boat_button.grid(column=1, row=count, sticky=EW)
+            self.contestant_buttons.append(boat_button)
+            count +=1
+        self.start_button = Button(self.race_widget, text="Start Race", command=lambda: self.start_race(self.start_button))
+        self.start_button.grid(column=1, row=count, sticky=EW)
+
+    def race_button_press(self, button, boat):
+        """When the button is pressed the boat has finnished the race and the button becomes DISABLED"""
+        button.config(state=DISABLED)
+
+
+    def start_race(self, startbutton): #Fixa så den här funktionen skapar ett race för att sedan använda racefunktionerna för att färdigställa objektet
+        startbutton.config(state=DISABLED)
+        for button in self.contestant_buttons:
+            button.config(state=ACTIVE)
+        self.race = race_module.Race(self.race_name.get()) 
+
+    def boat_to_race(self):
+        """Adds selected boat to active race creation"""
+        cursor = self.list.curselection()
+        selected_boat = boatlist[int(cursor[0]/5)]
+        self.contestant_list.append(selected_boat)
+        self.refresh_race()
 
     def update_racelist(self):
         """Delete old racelist to insert new races from racelist"""
