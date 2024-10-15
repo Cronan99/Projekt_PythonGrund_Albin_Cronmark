@@ -17,7 +17,6 @@ try:
 except:
     pass
 
-
 class GUI():
     """Creates the main GUI"""
 
@@ -142,7 +141,7 @@ class GUI():
         self.contestant_list = []
         self.contestant_buttons = []
         self.race_widget = Tk()
-        self.race_widget.geometry("200x500")
+        self.race_widget.geometry("300x500")
         self.race_widget.title("Race")
 
         enter_name = Label(self.race_widget, text="Race Name:")
@@ -159,7 +158,8 @@ class GUI():
         """refreshes boatlist when creating a race"""
         count=1
         for boat in self.contestant_list:
-            boat_button = Button(self.race_widget, text=boat.name, state=DISABLED, command=lambda: self.race_button_press(boat_button, boat.name))
+            boat_button = Button(self.race_widget, text=f"{boat.name} {boat.sail}", state=DISABLED)
+            boat_button.config(command=lambda b_button=boat_button, b=boat: self.race_button_press(b_button, b))
             boat_button.grid(column=1, row=count, sticky=EW)
             self.contestant_buttons.append(boat_button)
             count +=1
@@ -169,14 +169,15 @@ class GUI():
     def race_button_press(self, button, boat):
         """When the button is pressed the boat has finnished the race and the button becomes DISABLED"""
         button.config(state=DISABLED)
-
+        print(boat.name)
 
     def start_race(self, startbutton): #Fixa så den här funktionen skapar ett race för att sedan använda racefunktionerna för att färdigställa objektet
         startbutton.config(state=DISABLED)
         for button in self.contestant_buttons:
             button.config(state=ACTIVE)
-        self.race = race_module.Race(self.race_name.get()) 
-
+        print(self.contestant_buttons)
+        self.race = race_module.Race(self.race_name.get())
+        
     def boat_to_race(self):
         """Adds selected boat to active race creation"""
         cursor = self.list.curselection()
@@ -195,17 +196,14 @@ class GUI():
         """Display any error that occours"""
         messagebox.showerror("ERROR", f"{error}")
 
-
     def updateUI(self):
         self.root.mainloop()
-
 
 myGUI=GUI() #Creating and running the main GUI
 myGUI.boatlist()
 myGUI.racelist()
 myGUI.addboat()
 myGUI.updateUI()
-
 
 file_module.savefile(boatlist, "Boatlist.txt") #Saving the lists of object to files before closing down.
 file_module.savefile(racelist, "Racelist.txt")
