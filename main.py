@@ -1,6 +1,7 @@
 import boatinfo
 import file_module
 import race_module
+from datetime import datetime
 from tkinter import *
 from tkinter import messagebox
 
@@ -23,7 +24,7 @@ class GUI():
     def __init__(self):
         """Creates Main Window"""
         self.root = Tk()
-        self.root.geometry("1000x500")
+        self.root.geometry("1100x280")
         self.root.title("RaceTracker")
 
     def boatlist(self):
@@ -91,6 +92,9 @@ class GUI():
 
         add_to_race = Button(addboat_layout, text="Add to Race", command=lambda: self.boat_to_race()) #Button to send a boat to a race
         add_to_race.grid(column=1, row=7, sticky=EW)
+        
+        displayrace = Button(addboat_layout, text="Display Race", command=lambda: self.display_race()) #Button to display a race
+        displayrace.grid(column=1, row=8, sticky=EW)
 
         addboat_layout.grid(column=2, row=1, sticky=N)
 
@@ -156,27 +160,35 @@ class GUI():
 
     def refresh_race(self):
         """refreshes boatlist when creating a race"""
-        count=1
+        self.count=0
         for boat in self.contestant_list:
             boat_button = Button(self.race_widget, text=f"{boat.name} {boat.sail}", state=DISABLED)
             boat_button.config(command=lambda b_button=boat_button, b=boat: self.race_button_press(b_button, b))
-            boat_button.grid(column=1, row=count, sticky=EW)
+            boat_button.grid(column=1, row=self.count+1, sticky=EW)
             self.contestant_buttons.append(boat_button)
-            count +=1
+            self.count +=1
         self.start_button = Button(self.race_widget, text="Start Race", command=lambda: self.start_race(self.start_button))
-        self.start_button.grid(column=1, row=count, sticky=EW)
+        self.start_button.grid(column=1, row=self.count+1, sticky=EW)
 
     def race_button_press(self, button, boat):
         """When the button is pressed the boat has finnished the race and the button becomes DISABLED"""
         button.config(state=DISABLED)
-        print(boat.name)
-
+        self.race.race(boat, self.start)
+        self.counter += 1
+        print(self.counter)
+        print(self.count)
+        if self.counter == self.count:
+            self.race.result(racelist)
+            self.race_widget.destroy()
+            self.update_racelist()
+            
     def start_race(self, startbutton): #Fixa så den här funktionen skapar ett race för att sedan använda racefunktionerna för att färdigställa objektet
         startbutton.config(state=DISABLED)
+        self.start = datetime.now().hour
         for button in self.contestant_buttons:
             button.config(state=ACTIVE)
-        print(self.contestant_buttons)
         self.race = race_module.Race(self.race_name.get())
+        self.counter = 0
         
     def boat_to_race(self):
         """Adds selected boat to active race creation"""
@@ -191,6 +203,24 @@ class GUI():
 
         for i in racelist:
             self.races.insert(END, f"{i.name}")
+            
+    def leaderboard(self):
+        scroll = Scrollbar(self.root)
+        scroll.grid(column=8, row=1,sticky=NS)
+        label = Label(self.root, text="Leaderboard")
+        label.grid(column=7, row=0, sticky=NSEW)
+        self.board = Listbox(self.root, yscrollcommand=scroll.set, width=30, height=15)
+        scroll.config(command=self.board.yview)
+
+        self.board.grid(column=7, row=1)
+        
+    def display_race(self):
+    
+        cursor = self.races.curselection()
+        selected_race = racelist[int(cursor[0])]
+        for i in selected_race.recounted:
+            self.board.insert(END, f"{i.name}")
+            self.board.insert(END, f"{selected_race.recounted[i]}")
 
     def error_msg(self, error):
         """Display any error that occours"""
@@ -203,6 +233,7 @@ myGUI=GUI() #Creating and running the main GUI
 myGUI.boatlist()
 myGUI.racelist()
 myGUI.addboat()
+myGUI.leaderboard()
 myGUI.updateUI()
 
 file_module.savefile(boatlist, "Boatlist.txt") #Saving the lists of object to files before closing down.
