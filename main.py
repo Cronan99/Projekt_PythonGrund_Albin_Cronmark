@@ -96,6 +96,9 @@ class GUI():
         displayrace = Button(addboat_layout, text="Display Race", command=lambda: self.display_race()) #Button to display a race
         displayrace.grid(column=1, row=8, sticky=EW)
 
+        delete_race = Button(addboat_layout, text="Delete Selected Race", command=lambda: self.delete_race()) #Deletes selected race
+        delete_race.grid(column=1, row=9)
+
         addboat_layout.grid(column=2, row=1, sticky=N)
 
     def refresh_boats(self):
@@ -164,19 +167,23 @@ class GUI():
         for boat in self.contestant_list:
             boat_button = Button(self.race_widget, text=f"{boat.name} {boat.sail}", state=DISABLED)
             boat_button.config(command=lambda b_button=boat_button, b=boat: self.race_button_press(b_button, b))
-            boat_button.grid(column=1, row=self.count+1, sticky=EW)
+            boat_button.grid(column=1, row=self.count+2, sticky=EW)
             self.contestant_buttons.append(boat_button)
             self.count +=1
         self.start_button = Button(self.race_widget, text="Start Race", command=lambda: self.start_race(self.start_button))
-        self.start_button.grid(column=1, row=self.count+1, sticky=EW)
+        self.start_button.grid(column=1, row=self.count+2, sticky=EW)
+
+    def race_time(self):
+        time = datetime.now()-self.start
+        time_label = Label(self.race_widget, text=f"Race Duration: {time}")
+        time_label.grid(column=1, row=1)
+        time_label.after(1000, self.race_time)
 
     def race_button_press(self, button, boat):
         """When the button is pressed the boat has finnished the race and the button becomes DISABLED"""
         button.config(state=DISABLED)
         self.race.race(boat, self.start)
         self.counter += 1
-        print(self.counter)
-        print(self.count)
         if self.counter == self.count:
             self.race.result(racelist)
             self.race_widget.destroy()
@@ -184,7 +191,8 @@ class GUI():
             
     def start_race(self, startbutton): #Fixa så den här funktionen skapar ett race för att sedan använda racefunktionerna för att färdigställa objektet
         startbutton.config(state=DISABLED)
-        self.start = datetime.now().hour
+        self.start = datetime.now()
+        self.race_time()
         for button in self.contestant_buttons:
             button.config(state=ACTIVE)
         self.race = race_module.Race(self.race_name.get())
@@ -196,6 +204,12 @@ class GUI():
         selected_boat = boatlist[int(cursor[0]/5)]
         self.contestant_list.append(selected_boat)
         self.refresh_race()
+
+    def delete_race(self):
+        cursor = self.races.curselection()
+        selected_race = racelist[int(cursor[0])]
+        racelist.remove(selected_race)
+        self.update_racelist()
 
     def update_racelist(self):
         """Delete old racelist to insert new races from racelist"""
@@ -215,12 +229,16 @@ class GUI():
         self.board.grid(column=7, row=1)
         
     def display_race(self):
-    
+        self.board.delete(0, END)
         cursor = self.races.curselection()
         selected_race = racelist[int(cursor[0])]
+        count = 1
         for i in selected_race.recounted:
+            self.board.insert(END, f"Placement: {count}")
             self.board.insert(END, f"{i.name}")
             self.board.insert(END, f"{selected_race.recounted[i]}")
+            self.board.insert(END, "")
+            count+=1
 
     def error_msg(self, error):
         """Display any error that occours"""

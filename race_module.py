@@ -11,13 +11,13 @@ class Race:
         """Calculates the recounted times with the realtimes from the race"""
         self.recounted = {}
         for i in self.finish_times:
-            newtime = i.srs*self.finish_times[i]
+            newtime = float(i.srs)*self.finish_times[i]
             self.recounted.update({i:newtime})
         self.recounted = {k: v for k, v in sorted(self.recounted.items(), key=lambda item: item[1])}
         list.append(self)
 
     def race(self, boat, start):
         """Runs the race and saves each boats time delta to start time in a key:value dict"""
-        racetime = datetime.now().hour-start
+        finish = datetime.now()
+        racetime = finish-start
         self.finish_times.update({boat:racetime})
-        print(self.finish_times)
