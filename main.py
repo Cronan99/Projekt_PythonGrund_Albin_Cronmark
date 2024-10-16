@@ -5,9 +5,18 @@ from datetime import datetime
 from tkinter import *
 from tkinter import messagebox
 
+"""This is the mainfile of the Racetracker
+Here most of the app is running from
+It uses two types of objects (Boats and Races)
+with the objects it can create lists of boats and races and displays them in listboxes
+with the functions in the race-class a race can be created where it tracks the time of
+all contestants and when one finishes their time is recounted by their srs(handicap)
+each race gets saved in a list and can later be displayed"""
+
 boatlist = [] #List of Boats
 racelist = [] #List of Races
 
+"""Try to load previusly saved files"""
 try:
     racelist = file_module.loadfile("Racelist.txt") #If the file exist, opens otherwise pass
 except:
@@ -36,28 +45,30 @@ class GUI():
         self.list = Listbox(self.root, yscrollcommand=scroll.set, width=30, height=15)
         scroll.config(command=self.list.yview)
 
-        self.update_boatlist()
+        self.update_boatlist() #Updates the boatlist in the window using the boatlist
 
         self.list.grid(column=0, row=1)
 
     def delete_boat(self):
         """Takes selected boat from boatlist and deletes it"""
+        try:    #If no boat is selected it tells the user
+            cursor = self.list.curselection()
+            delete_boat = boatlist[int(cursor[0]/5)]
+            boatlist.remove(delete_boat)
 
-        cursor = self.list.curselection()
-        delete_boat = boatlist[int(cursor[0]/5)]
-        boatlist.remove(delete_boat)
-
-        self.update_boatlist()
+            self.update_boatlist()
+        except IndexError:
+            self.error_msg("Please select a boat for deletion!")
 
     def addboat(self):
-        """Takes userinput to create a new boat object"""
+        """Takes userinput to create a new boat object or other actions"""
 
         Label(self.root, text="Add New Boat").grid(column=2, row=0, sticky=N)
 
-        self.update_boatinput()
+        self.update_boatinput() #Updates buttons and user entries in the boatinfo boxes
 
     def update_boatinput(self):
-        """Takes userinput to create a new boat object"""
+        """Most of userinput is created here, buttons and entries"""
 
         addboat_layout = Frame(self.root) #Creates a layout for the boatinfo entry
         addboat_layout.rowconfigure(0, weight=1)
@@ -69,52 +80,61 @@ class GUI():
         Label(addboat_layout, text="SRS:").grid(column=0, row=2, sticky=NW)
         Label(addboat_layout, text="Crew:").grid(column=0, row=3, sticky=NW)
 
-        self.name = Entry(addboat_layout)               #Boatinfo Entries
+        self.name = Entry(addboat_layout)                                               #Boatinfo Entries
         self.name.grid(column=1 ,row=0, sticky=NW)
-
         self.sail = Entry(addboat_layout)
         self.sail.grid(column=1, row=1, sticky=NW)
-
         self.srs = Entry(addboat_layout)
         self.srs.grid(column=1, row=2, sticky=NW)
-
         self.crew = Entry(addboat_layout)
         self.crew.grid(column=1, row=3, sticky=NW)
 
-        btn = Button(addboat_layout, text="Add Boat", command=lambda: self.refresh_boats()) #Addboat button
+        btn = Button(addboat_layout, text="Add Boat", command=lambda: self.refresh_boats())                          #Addboat button
         btn.grid(column=1, row=4, sticky=EW)
 
-        delete_button = Button(addboat_layout, text="Delete Selected Boat", command=lambda: self.delete_boat()) #Deleteboat button
+        delete_button = Button(addboat_layout, text="Delete Selected Boat", command=lambda: self.delete_boat())     #Deleteboat button
         delete_button.grid(column=1, row=5, sticky=EW)
 
-        create_race = Button(addboat_layout, text="Create Race", command=lambda: self.create_race()) #Button to create a race
+        create_race = Button(addboat_layout, text="Create Race", command=lambda: self.create_race())                #Button to create a race
         create_race.grid(column=1, row=6, sticky=EW)
 
-        add_to_race = Button(addboat_layout, text="Add to Race", command=lambda: self.boat_to_race()) #Button to send a boat to a race
+        add_to_race = Button(addboat_layout, text="Add to Race", command=lambda: self.boat_to_race())               #Button to send a boat to a race
         add_to_race.grid(column=1, row=7, sticky=EW)
         
-        displayrace = Button(addboat_layout, text="Display Race", command=lambda: self.display_race()) #Button to display a race
+        displayrace = Button(addboat_layout, text="Display Race", command=lambda: self.display_race())              #Button to display a race
         displayrace.grid(column=1, row=8, sticky=EW)
 
-        delete_race = Button(addboat_layout, text="Delete Selected Race", command=lambda: self.delete_race()) #Deletes selected race
+        delete_race = Button(addboat_layout, text="Delete Selected Race", command=lambda: self.delete_race())        #Deletes selected race
         delete_race.grid(column=1, row=9)
 
-        addboat_layout.grid(column=2, row=1, sticky=N)
+        addboat_layout.grid(column=2, row=1, sticky=N)                                                               #<<<<<LAYOUT GRID PLACEMENT
 
     def refresh_boats(self):
-        """Gets entrys when the button is pressed in update_boatinput"""
+        """Gets entries when the button is pressed in update_boatinput"""
 
         state = True #If no error happens state will remain true and add boat
-        try:          #Test if sail and srs is numbers
+        try:
+            if not self.name.get() or not self.sail.get() or not self.srs.get() or not self.crew.get():
+                raise TypeError("Please fill in all of the boxes above!")
+
+            for i in boatlist:
+                if self.name.get() == i.name and self.sail.get() == i.sail:
+                    raise TypeError(f"The boat: {self.name.get()} {self.sail.get()}, is already in the list!")
+
             int(self.sail.get())
             float(self.srs.get())
-        except:
+            
+        except ValueError:
             self.error_msg("Error: Sailnumber and SRS must be numbers!")
             state = False
 
+        except TypeError as e:
+            self.error_msg(f"{e}")
+            state = False
+    
         if state:
-            boatinfo.new_boat(boatlist, self.name.get(), self.sail.get(), self.srs.get(), self.crew.get()) #get() from update_boatinfo()
-            self.update_boatlist()
+            boatinfo.new_boat(boatlist, self.name.get(), self.sail.get(), self.srs.get(), self.crew.get()) #Getting info from entries in update_boatinfo()
+            self.update_boatlist()                                                                         #Updating list aswell as removes previus userinput from entries
             self.update_boatinput()
 
     def update_boatlist(self):
@@ -174,6 +194,7 @@ class GUI():
         self.start_button.grid(column=1, row=self.count+2, sticky=EW)
 
     def race_time(self):
+        """Displays race duration during the race"""
         time = datetime.now()-self.start
         time_label = Label(self.race_widget, text=f"Race Duration: {time}")
         time_label.grid(column=1, row=1)
@@ -189,27 +210,55 @@ class GUI():
             self.race_widget.destroy()
             self.update_racelist()
             
-    def start_race(self, startbutton): #Fixa så den här funktionen skapar ett race för att sedan använda racefunktionerna för att färdigställa objektet
-        startbutton.config(state=DISABLED)
-        self.start = datetime.now()
-        self.race_time()
-        for button in self.contestant_buttons:
-            button.config(state=ACTIVE)
-        self.race = race_module.Race(self.race_name.get())
-        self.counter = 0
+    def start_race(self, startbutton):
+        """When start button is pressed checks if there are atleast two boats and a name entered and otherwise starts the race"""
+        try:
+            if len(self.contestant_list) < 2:
+                raise ValueError("Race need atleast 2 boats to start!")
+            if not self.race_name.get():
+                raise ValueError("Please enter a name for the race!")
+            startbutton.config(state=DISABLED)
+            self.start = datetime.now()
+            self.race_time()
+            for button in self.contestant_buttons:
+                button.config(state=ACTIVE)
+            self.race = race_module.Race(self.race_name.get())
+            self.counter = 0
+        except ValueError as e:
+            self.error_msg(e)
         
     def boat_to_race(self):
         """Adds selected boat to active race creation"""
-        cursor = self.list.curselection()
-        selected_boat = boatlist[int(cursor[0]/5)]
-        self.contestant_list.append(selected_boat)
-        self.refresh_race()
+        try:
+            cursor = self.list.curselection()
+            selected_boat = boatlist[int(cursor[0]/5)]
+
+            state = True
+        except IndexError:
+            self.error_msg("START a race and SELECT a boat from the list to add!")
+            state = False
+
+        try:
+            for i in self.contestant_list:
+                if selected_boat == i:
+                    raise TypeError(f"{selected_boat.name} is already in the race! Please select another one.")
+        except TypeError as e:
+            self.error_msg(e)    
+            state = False   
+
+        if state:
+            self.contestant_list.append(selected_boat)
+            self.refresh_race()
 
     def delete_race(self):
-        cursor = self.races.curselection()
-        selected_race = racelist[int(cursor[0])]
-        racelist.remove(selected_race)
-        self.update_racelist()
+        """Deletes the selected race"""
+        try:
+            cursor = self.races.curselection()
+            selected_race = racelist[int(cursor[0])]
+            racelist.remove(selected_race)
+            self.update_racelist()
+        except IndexError:
+            self.error_msg("Please select a race for deletion!")
 
     def update_racelist(self):
         """Delete old racelist to insert new races from racelist"""
@@ -219,6 +268,7 @@ class GUI():
             self.races.insert(END, f"{i.name}")
             
     def leaderboard(self):
+        """Creates a leaderboard where the result of a race is going to be displayed"""
         scroll = Scrollbar(self.root)
         scroll.grid(column=8, row=1,sticky=NS)
         label = Label(self.root, text="Leaderboard")
@@ -229,16 +279,20 @@ class GUI():
         self.board.grid(column=7, row=1)
         
     def display_race(self):
-        self.board.delete(0, END)
-        cursor = self.races.curselection()
-        selected_race = racelist[int(cursor[0])]
-        count = 1
-        for i in selected_race.recounted:
-            self.board.insert(END, f"Placement: {count}")
-            self.board.insert(END, f"{i.name}")
-            self.board.insert(END, f"{selected_race.recounted[i]}")
-            self.board.insert(END, "")
-            count+=1
+        """Displaying selected race on the leaderboard widget"""
+        try:
+            self.board.delete(0, END)
+            cursor = self.races.curselection()
+            selected_race = racelist[int(cursor[0])]
+            count = 1
+            for i in selected_race.recounted:
+                self.board.insert(END, f"Placement: {count}")
+                self.board.insert(END, f"{i.name}")
+                self.board.insert(END, f"{selected_race.recounted[i]}")
+                self.board.insert(END, "")
+                count+=1
+        except IndexError:
+            self.error_msg("Please select a race to display!")
 
     def error_msg(self, error):
         """Display any error that occours"""

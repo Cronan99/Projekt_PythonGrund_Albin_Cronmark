@@ -1,7 +1,7 @@
 from datetime import datetime
 
 class Race:
-    """Creates a race object that has functions to make a list of contestants and calculate a result"""
+    """Creates a race object that has functions to give boats finishing times and sort them in order by time"""
     def __init__(self, name):
         self.name = name
         self.finish_times = {}

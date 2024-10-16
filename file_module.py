@@ -1,5 +1,6 @@
 import pickle
 
+"""Functions below use pickle to save and load files as binary data"""
 def loadfile(file):
     with open(file, "rb") as f:
         return pickle.load(f)
